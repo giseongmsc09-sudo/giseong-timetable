@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>기성중 7교시 시간표</title>
+    <title>기성중 시간표 (수정)</title>
     <style>
         :root {
             --bg-color: #ffffff;
@@ -12,7 +12,6 @@
             --accent-color: #eb5757;
             --card-bg: #fdfdfd;
             --header-bg: #f7f6f3;
-            --empty-color: #f5f5f5;
         }
 
         body {
@@ -26,7 +25,6 @@
             align-items: center;
         }
 
-        /* 1. 상단 컨트롤 */
         .header {
             display: flex;
             align-items: center;
@@ -60,7 +58,6 @@
             color: white;
         }
 
-        /* 2. 시간표 3단 그리드 */
         .dashboard-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -85,6 +82,21 @@
             font-weight: 700;
             border-bottom: 1px solid var(--border-color);
             color: #444;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-left: 15px;
+            padding-right: 15px;
+        }
+        
+        .data-count {
+            font-size: 0.7rem;
+            color: #aaa;
+            font-weight: normal;
+            background: #fff;
+            padding: 2px 6px;
+            border-radius: 10px;
+            border: 1px solid #eee;
         }
 
         .period-list {
@@ -97,7 +109,7 @@
             display: flex;
             border-bottom: 1px solid #eee;
             font-size: 0.9rem;
-            height: 36px; /* 높이 고정 (균일하게 보이기 위해) */
+            height: 36px;
             align-items: center;
         }
         .period-row:last-child { border-bottom: none; }
@@ -124,11 +136,7 @@
             text-overflow: ellipsis;
         }
 
-        /* 수업 없는 교시 스타일 */
-        .subject-empty {
-            color: #ccc;
-            font-size: 0.8rem;
-        }
+        .subject-empty { color: #ccc; font-size: 0.8rem; }
 
         .no-data {
             padding: 40px 20px;
@@ -153,7 +161,7 @@
         @media (max-width: 600px) {
             .dashboard-grid { grid-template-columns: 1fr; }
         }
-
+        
         @media (prefers-color-scheme: dark) {
             :root {
                 --bg-color: #191919;
@@ -161,7 +169,6 @@
                 --border-color: #3f3f3f;
                 --card-bg: #252525;
                 --header-bg: #2f2f2f;
-                --empty-color: #333;
             }
             .period-num { background-color: #333; border-color: #444; }
             .period-row { border-color: #444; }
@@ -174,42 +181,48 @@
         <button class="nav-btn" onclick="moveDate(-1)">&#10094;</button>
         <div class="title-area">
             <div class="main-title" id="date-display"></div>
-            <div class="sub-info">기성중학교 (7교시 고정)</div>
+            <div class="sub-info">기성중학교</div>
         </div>
         <button class="nav-btn" onclick="moveDate(1)">&#10095;</button>
     </div>
 
     <div class="dashboard-grid">
         <div class="class-card">
-            <div class="card-header">1학년 1반</div>
+            <div class="card-header">
+                <span>1-1</span>
+                <span class="data-count" id="count-1-1">-개</span>
+            </div>
             <div class="period-list" id="list-1-1"></div>
         </div>
         <div class="class-card">
-            <div class="card-header">2학년 1반</div>
+            <div class="card-header">
+                <span>2-1</span>
+                <span class="data-count" id="count-2-1">-개</span>
+            </div>
             <div class="period-list" id="list-2-1"></div>
         </div>
         <div class="class-card">
-            <div class="card-header">3학년 1반</div>
+            <div class="card-header">
+                <span>3-1</span>
+                <span class="data-count" id="count-3-1">-개</span>
+            </div>
             <div class="period-list" id="list-3-1"></div>
         </div>
     </div>
 
-    <div id="loading" class="loading-overlay">시간표 불러오는 중...</div>
+    <div id="loading" class="loading-overlay">데이터 불러오는 중...</div>
 
     <script>
-        // ▼ 학교 정보 (기성중) ▼
         const ATPT_OFCDC_SC_CODE = "G10"; 
         const SD_SCHUL_CODE = "7451011"; 
         
-        // 표시할 대상
         const TARGETS = [
-            { grade: 1, classNo: 1, elementId: 'list-1-1' },
-            { grade: 2, classNo: 1, elementId: 'list-2-1' },
-            { grade: 3, classNo: 1, elementId: 'list-3-1' }
+            { grade: 1, classNo: 1, elementId: 'list-1-1', countId: 'count-1-1' },
+            { grade: 2, classNo: 1, elementId: 'list-2-1', countId: 'count-2-1' },
+            { grade: 3, classNo: 1, elementId: 'list-3-1', countId: 'count-3-1' }
         ];
 
         let currentDate = new Date();
-
         renderAll();
 
         function moveDate(days) {
@@ -238,10 +251,10 @@
             const d = String(currentDate.getDate()).padStart(2, '0');
             dateDisplay.innerText = `${m}월 ${d}일 (${daysChar[currentDate.getDay()]})`;
 
-            // 주말 체크
             if (currentDate.getDay() === 0 || currentDate.getDay() === 6) {
                 TARGETS.forEach(t => {
-                    document.getElementById(t.elementId).innerHTML = '<div class="no-data">주말입니다 😴</div>';
+                    document.getElementById(t.elementId).innerHTML = '<div class="no-data">주말입니다</div>';
+                    document.getElementById(t.countId).innerText = "0개";
                 });
                 return;
             }
@@ -252,7 +265,6 @@
             const schoolYear = getSchoolYear(currentDate);
             const semester = getSemester(currentDate);
 
-            // 3개 학급 데이터 동시 요청
             const requests = TARGETS.map(target => {
                 const url = `https://open.neis.go.kr/hub/misTimetable?Type=json&pIndex=1&pSize=100&ATPT_OFCDC_SC_CODE=${ATPT_OFCDC_SC_CODE}&SD_SCHUL_CODE=${SD_SCHUL_CODE}&AY=${schoolYear}&SEM=${semester}&ALL_TI_YMD=${apiDate}&GRADE=${target.grade}&CLASS_NM=${target.classNo}`;
                 
@@ -268,42 +280,23 @@
 
                 results.forEach(result => {
                     const container = document.getElementById(result.target.elementId);
+                    const countBadge = document.getElementById(result.target.countId);
                     container.innerHTML = ''; 
 
-                    // 데이터 매핑 (교시 -> 과목명)
                     let subjectMap = {};
+                    let dataCount = 0;
+
                     if (result.data && result.data.misTimetable) {
                         const rows = result.data.misTimetable[1].row;
+                        dataCount = rows.length; // 실제로 받아온 데이터 개수
+
                         rows.forEach(item => {
-                            subjectMap[item.PERIO] = item.ITRT_CNTNT; // 1교시: 국어, 2교시: 수학...
+                            // [수정 핵심] 문자 "06"을 숫자 6으로 변환하여 저장
+                            // 이렇게 하면 "06"이 오든 "6"이 오든 다 잡을 수 있음
+                            const perioNum = parseInt(item.PERIO);
+                            subjectMap[perioNum] = item.ITRT_CNTNT; 
                         });
                     }
 
-                    // [핵심] 데이터가 있든 없든 1~7교시 루프를 돌려서 그립니다.
-                    if (result.data && result.data.misTimetable) {
-                        for (let i = 1; i <= 7; i++) {
-                            const subject = subjectMap[String(i)] || "-"; // 과목 없으면 하이픈
-                            const isEmpty = subject === "-";
-                            
-                            const div = document.createElement('div');
-                            div.className = 'period-row';
-                            div.innerHTML = `
-                                <div class="period-num">${i}</div>
-                                <div class="subject-name ${isEmpty ? 'subject-empty' : ''}">${subject}</div>
-                            `;
-                            container.appendChild(div);
-                        }
-                    } else {
-                        // 아예 데이터가 없는 날 (공휴일 등)
-                        container.innerHTML = '<div class="no-data">정보 없음</div>';
-                    }
-                });
-
-            } catch (e) {
-                console.error(e);
-                loading.style.display = 'none';
-            }
-        }
-    </script>
-</body>
-</html>
+                    // 상단에 "6개 수신됨" 등으로 표시
+                    countBadge.innerText =
